@@ -3,8 +3,9 @@ const ABI = require('./ABI');
 const bigRational = require("big-rational");
 const { RateLimiter } = require("limiter");
 const EventEmitter = require('events');
-
+const fs = require('fs');
 const readline = require('readline');
+const { Console } = require('console');
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
 process.title = "Euler's Hertz Feed"
@@ -12,7 +13,15 @@ process.title = "Euler's Hertz Feed"
 const SWAP_TYPE = {BUY: "BUY", SELL: "SELL"};
 const SWAP_EVENT = "SWAP_EVENT";
 
-const database = {endpoints: { }};
+//database stuff
+const NODE_TYPE = {ENDPOINT: "ENDPOINT", FACTORY: "FACTORY", TOKEN: "TOKEN"};
+const idToNode = {}
+const endpointToNode = {};
+let _idTracker = 0;
+
+
+
+
 
 async function init(){
     console.log("*** Euler's very simple htz feed ****\n");
@@ -25,51 +34,61 @@ async function init(){
     console.log(tutorial);
     console.log("Or just press ENTER when prompted and I will use Euler's (it will start complaining with too many of us using it though though because it's a free account too!)\n");
 
-    let endpoint = await prompt("\nPaste your endpoint here (you may have to right click the toolbar -> edit -> paste instead of ctrl-V):");
+    let endpoint = null;//await prompt("\nPaste your endpoint here (you may have to right click the toolbar -> edit -> paste instead of ctrl-V):");
     console.log("Thank you :)\n\nInitialising hertz feed (this may take about 30 seconds)...");
     if (!endpoint){
-        endpoint = "https://apis.ankr.com/9acd7b67547a4c02b7e0093b9fc509ce/4b7b909b5596505a954a45acc3173c92/fantom/full/main";
+        endpoint = "https://apis.ankr.com/e501c03064e7453f9e76b57bd80aa1cd/4b7b909b5596505a954a45acc3173c92/fantom/full/main";
     }
     
-    console.log('- Adding endpoint');
-    addEndpoint(endpoint)
-    console.log('- Creating fiat tracker');
-    let customFiatTracker
-    while (!customFiatTracker){
-        try {
-            customFiatTracker = await createSimpleFiatTracker(
-                endpoint,
-                '0x152eE697f2E276fA89E96742e9bB9aB1F2E61bE3',//spooky factory
-                '0x04068DA6C83AFCFA0e13ba15A6696662335D5B75',//usdc
-                '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'//ftm
-            )
-        } catch {
-            console.log("Hmm. That didn't work- let me try again...");
-        }
-    }
-    
-    let xdaoHtzFtmPairEntry = await addToken({
-        endpoint: endpoint,
-        factoryAddress: '0xcb9ea67a5eb76d22688bf21d6689c435d4e25077',
-        tokenAddress: '0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD',//hertz
-        comparatorAddress: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83',//ftm
-        fiatAddress: undefined,
-        customFiatTracker
-        //we can sneakily set up a tracker to convert ftm to usdc, because xdao doesn't have that yet
-        
-    })
 
-    console.log(`Current Price: ${xdaoHtzFtmPairEntry.initialComparatorAmountPerTokenRational.toDecimal(8)} ${xdaoHtzFtmPairEntry.comparatorSymbol} ($${ xdaoHtzFtmPairEntry.initialFiatAmountPerTokenRational.toDecimal(8)})`);
-    console.log("OK. Listening for trades...\n");
+    const spookyFactorAddress = '0x152eE697f2E276fA89E96742e9bB9aB1F2E61bE3';
+    const xdaoFactoryAddress = '0xcb9ea67a5eb76d22688bf21d6689c435d4e25077';
 
-    xdaoHtzFtmPairEntry.emitter.on(SWAP_EVENT, async (pairEntry, swapInfo) => {
-        let outputString = `Transaction: https://ftmscan.com/tx/${swapInfo.transactionHash}\n${swapInfo.action}: `;
-        outputString += `${swapInfo.tokenAmountRational.toDecimal(8)} ${pairEntry.tokenSymbol} for `
-        outputString +=  `${swapInfo.comparatorAmountRational.toDecimal(8)} ${pairEntry.comparatorSymbol} `
-        outputString += `($${swapInfo.fiatAmountRational.toDecimal(8)})\n`;
-        outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${pairEntry.comparatorSymbol} ($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
-        console.log(outputString);
+    console.log('- Adding endpoints');
+    const endpointNode = getEndpointNode({endpoint});
+
+    console.log('- Adding factories');
+    const spookyFactoryNode = getFactoryNode({endpoint, factoryAddress: spookyFactorAddress});
+    const xdaoFactoryNode = getFactoryNode({endpoint, factoryAddress: xdaoFactoryAddress});
+
+    console.log('- Adding comparator chains to fiat');
+    const usdcComparator = await getPairNode({
+        endpoint, factoryAddress: spookyFactorAddress, 
+        tokenAddress: '0x04068DA6C83AFCFA0e13ba15A6696662335D5B75'
     });
+    const ftmComparator = await getPairNode({
+        endpoint, factoryAddress: spookyFactorAddress, 
+        tokenAddress: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83', comparatorNodeId: usdcComparator.ID
+    });
+    const wethComparator = await getPairNode({
+        endpoint, factoryAddress: spookyFactorAddress, 
+        tokenAddress: '0x74b23882a30290451A17c44f4F05243b6b58C76d', comparatorNodeId: ftmComparator.ID
+    });
+    console.log('- Adding pairs');
+    const hertzFtmPairNode = await getPairNode({
+        endpoint, factoryAddress: xdaoFactoryAddress, 
+        tokenAddress: '0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD', comparatorNodeId: ftmComparator.ID
+    });
+    const hertzWethPairNode = await getPairNode({
+        endpoint, factoryAddress: xdaoFactoryAddress, 
+        tokenAddress: '0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD', comparatorNodeId: wethComparator.ID
+    });
+
+
+    console.log(`Current Price: ${hertzFtmPairNode.lastKnownPriceInComparator.toDecimal(8)} ${idToNode[hertzFtmPairNode.comparatorNodeId].symbol} ($${hertzFtmPairNode.lastKnownPriceInFiat.toDecimal(8)})`);
+    console.log(`Current Price: ${hertzWethPairNode.lastKnownPriceInComparator.toDecimal(8)} ${idToNode[hertzWethPairNode.comparatorNodeId].symbol} ($${hertzWethPairNode.lastKnownPriceInFiat.toDecimal(8)})`);
+    //console.log("OK. Listening for trades...\n");
+
+    /* for (let pairEntry of pairEntries){
+        pairEntry.emitter.on(SWAP_EVENT, async (pairEntry, swapInfo) => {
+            let outputString = `Transaction: https://ftmscan.com/tx/${swapInfo.transactionHash}\n${swapInfo.action}: `;
+            outputString += `${swapInfo.tokenAmountRational.toDecimal(8)} ${pairEntry.tokenSymbol} for `
+            outputString +=  `${swapInfo.comparatorAmountRational.toDecimal(8)} ${pairEntry.comparatorSymbol} `
+            outputString += `($${swapInfo.fiatAmountRational.toDecimal(8)})\n`;
+            outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${pairEntry.comparatorSymbol} ($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
+            console.log(outputString);
+        });
+    } */
 
 }
 (() => {init();})();
@@ -80,29 +99,167 @@ async function init(){
 
 
 
-function addEndpoint(endpoint){
-    //provider
-    if (!database.endpoints[endpoint]){
-        const limiter =  new RateLimiter({ tokensPerInterval: 2, interval: "second" });
-        database.endpoints[endpoint] = {
+function getEndpointNode({endpoint}){
+    if (endpointToNode[endpoint]){
+        return endpointToNode[endpoint];
+    }
+    const limiter =  new RateLimiter({ tokensPerInterval: 2, interval: "second" });
+    const node = {
+        TYPE: NODE_TYPE.ENDPOINT, 
+        ID: (_idTracker++).toString(),
+        FACTORY_IDS: [],
+        JS: {
             provider:  new ethers.providers.JsonRpcProvider(endpoint),
-            eventFilter: {
-                address: [],
-                topics: [ethers.utils.id("Swap(address,uint256,uint256,uint256,uint256,address)")]
-            },
-            limiter: limiter,
-            sendOne:  async function sendOne(obj, functionName, ...args){
+            sendOne:  async function(obj, functionName, ...args){
                 const remainingRequests = await limiter.removeTokens(1);
                 return obj[functionName](...args);
             },
-            factoryAddresses: { }
+        },
+        endpoint,
+        eventFilter: {
+            address: [],
+            topics: [ethers.utils.id("Swap(address,uint256,uint256,uint256,uint256,address)")]
+        },
+    };
+    
+    endpointToNode[endpoint] = node;
+    idToNode[node.ID] = node;
+    return node;
+}
+
+function getFactoryNode({endpoint, factoryAddress}){
+    let endpointNode = getEndpointNode({endpoint});
+    for (const id of endpointNode.FACTORY_IDS){
+        if (idToNode[id].factoryAddress === factoryAddress){
+            return idToNode[id];
         }
     }
+    const node = {
+        TYPE: NODE_TYPE.FACTORY, 
+        ID: (_idTracker++).toString(),
+        ENDPOINT_ID: endpointNode.ID,
+        TOKEN_IDS: [],
+        JS: {
+            contract: ABI.createFactoryContract(endpointNode.JS.provider, factoryAddress),
+        },
+    };
+    endpointNode.FACTORY_IDS.push(node.ID);
+    idToNode[node.ID] = node;
+    return node;
+}
+
+
+//the factoryAddress should be the factory that holds the address-comparatorAddress pair
+//give no comparatorNodeId for fiat (ie the end of a comparator chain)
+async function getPairNode({endpoint, factoryAddress, tokenAddress, comparatorNodeId}){
+    let endpointNode = getEndpointNode({endpoint});
+    let factoryNode = getFactoryNode({endpoint, factoryAddress});
+    for (const id of factoryNode.TOKEN_IDS){
+        if (idToNode[id].tokenAddress === tokenAddress){
+            return idToNode[id];
+        }
+    }
+
+    const comparatorNode = idToNode[comparatorNodeId];
+    const contract = ABI.createTokenContract(endpointNode.JS.provider, tokenAddress);
+
+    const sendOne = endpointNode.JS.sendOne;
+    
+    const [decimals, symbol, pairAddress] = await Promise.all([
+        sendOne(contract, 'decimals'),
+        sendOne(contract, 'symbol'),
+        comparatorNodeId && sendOne(factoryNode.JS.contract, 'getPair', tokenAddress, comparatorNode.tokenAddress),
+    ]);
+
+    const pairContract = comparatorNodeId && ABI.createPairContract(endpointNode.JS.provider, pairAddress);
+    const isToken0WithComparator = comparatorNodeId && ((await sendOne(pairContract, 'token0')) === tokenAddress);
+
+    const getPriceInComparatorFromContract= async function(){
+        if (!comparatorNodeId){
+            return 1;
+        }
+        const token0Decimals = isToken0WithComparator ? decimals : comparatorNode.decimals;
+        const token1Decimals = isToken0WithComparator ? comparatorNode.decimals : decimals;
+        let reserves = await sendOne(pairContract, 'getReserves');
+        const amount0AsRational = bigRational(reserves.reserve0.toString()).divide(bigRational('10').pow(token0Decimals));
+        const amount1AsRational = bigRational(reserves.reserve1.toString()).divide(bigRational('10').pow(token1Decimals));
+        return isToken0WithComparator ? amount1AsRational.divide(amount0AsRational) : amount0AsRational.divide(amount1AsRational);
+    }
+
+    const lastKnownPriceInComparator = await getPriceInComparatorFromContract();
+
+    let lastKnownPriceInFiat = lastKnownPriceInComparator;
+    let uplinkComparatorNode = comparatorNode
+    while (uplinkComparatorNode){
+        lastKnownPriceInFiat = lastKnownPriceInFiat.multiply(uplinkComparatorNode.lastKnownPriceInComparator);
+        uplinkComparatorNode = idToNode[uplinkComparatorNode.comparatorNodeId];
+    }
+    /*  
+        const comparatorFiatPriceInfo = comparatorFiatTokenTracker.getLastPriceInfo();
+        const tokenAmountRational = bigRational(tokenAmount.toString()).divide(bigRational('10').pow(pairEntry.tokenDecimals));
+        const comparatorAmountRational = bigRational(comparatorAmount.toString()).divide(bigRational('10').pow(pairEntry.comparatorDecimals));
+        const fiatAmountRational = comparatorAmountRational.multiply(comparatorFiatPriceInfo.fiatPerToken);
+        const tokenPriceInComparator = comparatorAmountRational.divide(tokenAmountRational);
+        const tokenPriceInFiat = fiatAmountRational.divide(tokenAmountRational);
+    */
+    
+
+    const node = {
+        TYPE: NODE_TYPE.TOKEN, 
+        ID: (_idTracker++).toString(),
+        FACTORY_ID: factoryNode.ID,
+        JS: {
+            contract,
+            pairContract
+        },
+        tokenAddress,
+        decimals,
+        symbol,
+        comparatorNodeId,
+        pairAddress,
+        lastKnownPriceInComparator,
+        lastKnownPriceInFiat,
+        isToken0WithComparator,
+    };
+
+    idToNode[node.ID] = node;
+    factoryNode.TOKEN_IDS.push(node.ID);
+    return node;
+}
+
+
+/*
+
+function startListening(pairNode){
+    
+    if (!endpointNode.JS.eventFilter.address.includes(pairNode.pairAddress)){
+        endpointNode.JS.provider.off(endpointNode.JS.eventFilter);
+        endpointNode.JS.eventFilter.address.push(pairNode.pairAddress);
+        endpointNode.JS.provider.on(endpointNode.JS.eventFilter, 
+    }
+    
+
 }
 
 
 
-async function addToken({
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function addToken(database, {
     endpoint,
     factoryAddress,
     tokenAddress,
@@ -154,7 +311,6 @@ async function addToken({
         }
 
         //pair
-        console.log('- Discovering pair address');
         const pairAddress = await sendOne(factoryContract, 'getPair', tokenAddress, comparatorAddress);
         if (comparatorEntry.pairAddresses[pairAddress]){
             console.log('todo handle pair already exists');
@@ -187,7 +343,6 @@ async function addToken({
         }
         const pairEntry = comparatorEntry.pairAddresses[pairAddress];
         
-        console.log('- Discovering token details');
         const [token0Address, token1Address] = await Promise.all([
             sendOne(pairEntry.pairContract, 'token0'),
             sendOne(pairEntry.pairContract, 'token1'),
@@ -225,6 +380,8 @@ async function addToken({
         pairEntry.initialFiatAmountPerTokenRational = currentFiatPrice;     
 
         provider.on(database.endpoints[endpoint].eventFilter, logHandler.bind(provider));
+
+        console.log(`    - ${pairEntry.tokenSymbol}-${pairEntry.comparatorSymbol} (${pairEntry.pairAddress})`);
 
         return pairEntry;
 }
@@ -321,8 +478,8 @@ function  getComparatorEntryFromPairAddress(pairAaddress){
 
 
 async function createSimpleFiatTracker(endpoint, factoryAddress, fiatAddress, tokenAddress){
-    const provider = database.endpoints[endpoint].provider;
-    const sendOne = database.endpoints[endpoint].sendOne;
+    const provider = _database.endpoints[endpoint].provider;
+    const sendOne = _database.endpoints[endpoint].sendOne;
     const factoryContract = ABI.createFactoryContract(provider, factoryAddress);
     const pairAddress = await sendOne(factoryContract, 'getPair', tokenAddress, fiatAddress);
     const pairContract = ABI.createPairContract(provider, pairAddress);
@@ -365,9 +522,13 @@ async function createSimpleFiatTracker(endpoint, factoryAddress, fiatAddress, to
     }
 
     pairContract.on('Swap', async (senderAddress, amount0In, amount1In, amount0Out, amount1Out, toAddress) => {
-        const fiatPerToken = await getCurrentPrice(pairContract, token0Decimals, token1Decimals, isTokenToken0, sendOne);
-        const tokenPerFiat = bigRational('1').divide(fiatPerToken);
-        tokenTracker.priceHistory.push({fiatPerToken, tokenPerFiat})
+        try {
+            const fiatPerToken = await getCurrentPrice(pairContract, token0Decimals, token1Decimals, isTokenToken0, sendOne);
+            const tokenPerFiat = bigRational('1').divide(fiatPerToken);
+            tokenTracker.priceHistory.push({fiatPerToken, tokenPerFiat})
+        } catch {
+
+        }
     });
 
     tokenTracker.stopListening = function(){
@@ -403,7 +564,7 @@ async function getCurrentPrice(pairContract, token0Decimals, token1Decimals, isT
 
 
 
-
+*/
 
 
 
