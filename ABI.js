@@ -33,6 +33,7 @@ function createPairContract(provider,pairAddress){
         'event Transfer(address indexed from, address indexed to, uint value)',
         'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
         'function decimals() external pure returns (uint8)',
+        'function balanceOf(address account) external view returns (uint256)',
         'function totalSupply() external view returns (uint)',
         'function factory() external view returns (address)',
         'function token0() external view returns (address)',

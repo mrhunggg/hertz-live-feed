@@ -22,11 +22,9 @@ let idTracker = 0;
 
 /*
     TODO
-    * add transaction time to the swap details
     * handle rejected promises- just stop the errors printing out
     * we can have wallet balance, but we need lp balances too or it's rather pointless
-
-
+        and it's not just LPs, we have to track down the actual pool contract because people deposit their LPs in those...
 
 
 
@@ -132,7 +130,6 @@ async function init(){
     console.log("- Writing snapshot out");
     writeOutSnapshot('snapshot.json');
 
-
     console.log("- Getting current price");
     await hertzFtmPairNode.JS.updatePriceInComparatorFromContract();
     console.log(`Current Price: ${hertzFtmPairNode.lastKnownPriceInComparator.toDecimal(8)} ${idToNode[hertzFtmPairNode.comparatorNodeId].symbol} ($${hertzFtmPairNode.lastKnownPriceInFiat.toDecimal(8)})`);
@@ -150,16 +147,16 @@ async function init(){
         const comparatorNode = idToNode[pairNode.comparatorNodeId];
         let outputString = `Transaction: https://ftmscan.com/tx/${swapInfo.transactionHash}\n${swapInfo.action}: `;
         outputString += `${swapInfo.tokenAmountRational.toDecimal(8)} ${pairNode.symbol} for `
-        outputString +=  `${swapInfo.comparatorAmountRational.toDecimal(8)} ${comparatorNode.symbol} `;
+        outputString +=  `${swapInfo.comparatorAmountRational.toDecimal(8)} ${comparatorNode.symbol}`;
         if (pairNode.linkedToFiat){
-            outputString += `($${swapInfo.fiatAmountRational.toDecimal(8)})\n`;
+            outputString += ` ($${swapInfo.fiatAmountRational.toDecimal(8)})\n`;
         } else {
             outputString += `\n`;
         }
         //outputString += `Wallet balance: ${swapInfo.walletBalance.toDecimal(8)} ${pairNode.symbol}\n`;
-        outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}`
+        outputString += `Current Price: ${pairNode.lastKnownPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}`
         if (pairNode.linkedToFiat){
-            outputString += `($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
+            outputString += ` ($${pairNode.lastKnownPriceInFiat.toDecimal(8)})\n`;
         } else {
             outputString += `\n`;
         }
@@ -274,11 +271,12 @@ function getJSComponent(node){
             },
             logHandler: async function(log){
                 const comparatorNode = idToNode[node.comparatorNodeId]
-
-                const transaction = await endpointNode.JS.provider.getTransaction(log.transactionHash);
+                
+                const [transaction, _] = await Promise.all([
+                    endpointNode.JS.provider.getTransaction(log.transactionHash),
+                    node.JS.updatePriceInComparatorFromContract()
+                ]);
                 const parsedLog = node.JS.pairContract.interface.parseLog(log);
-
-                //let walletBalancePromise = endpointNode.JS.sendOne(contract, 'balanceOf', transaction.from);
             
                 let wasBuy;
                 let tokenAmount;
@@ -295,25 +293,8 @@ function getJSComponent(node){
             
                 const tokenAmountRational = bigRational(tokenAmount.toString()).divide(bigRational('10').pow(node.decimals));
                 const comparatorAmountRational = bigRational(comparatorAmount.toString()).divide(bigRational('10').pow(comparatorNode.decimals));
-                const lastKnownPriceInComparator = comparatorAmountRational.divide(tokenAmountRational);
-                let lastKnownPriceInFiat = lastKnownPriceInComparator;
-                let uplinkComparatorNode = comparatorNode
-                const currentSeconds = Date.now();
-                while (uplinkComparatorNode){
-                    if (currentSeconds - uplinkComparatorNode.msAtLastPriceUpdate > 30000){
-                        await uplinkComparatorNode.JS.updatePriceInComparatorFromContract();
-                    } 
-                    lastKnownPriceInFiat = lastKnownPriceInFiat.multiply(uplinkComparatorNode.lastKnownPriceInComparator);
-                    uplinkComparatorNode = idToNode[uplinkComparatorNode.comparatorNodeId];
-                }
-                const fiatAmountRational = lastKnownPriceInFiat.multiply(tokenAmountRational);
-                
-                node.lastKnownPriceInComparator = lastKnownPriceInComparator;
-                node.lastKnownPriceInFiat = lastKnownPriceInFiat;
-                node.msAtLastPriceUpdate = Date.now();
-
-                //let walletBalance = bigRational((await walletBalancePromise).toString()).divide(bigRational('10').pow(node.decimals));
-            
+                //comparator's price would have been updated when we update this token's price above
+                let fiatAmountRational = comparatorAmountRational.multiply(comparatorNode.lastKnownPriceInFiat);
                 let action = wasBuy ? SWAP_TYPE.BUY : SWAP_TYPE.SELL ;
                 node.JS.swapHistory.push({
                     transactionHash: log.transactionHash,
@@ -321,10 +302,8 @@ function getJSComponent(node){
                     action, 
                     tokenAmountRational,
                     comparatorAmountRational, 
-                    fiatAmountRational,
-                    //walletBalance,
-                    tokenPriceInComparator: lastKnownPriceInComparator,
-                    tokenPriceInFiat: lastKnownPriceInFiat, 
+                    fiatAmountRational, 
+                    timestamp: Date.now()
                 });
             
                 node.JS.emitter.emit(SWAP_EVENT, node, node.JS.swapHistory[node.JS.swapHistory.length-1]);
