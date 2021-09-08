@@ -145,8 +145,7 @@ async function init(){
             outputString += `($${swapInfo.fiatAmountRational.toDecimal(8)})\n`;
             outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol} ($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
         } else {
-            outputString += `\n`;
-            outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}`;
+            outputString += `\nCurrent Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}\n`;
         }
        
         console.log(outputString);
