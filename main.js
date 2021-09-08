@@ -122,10 +122,9 @@ async function init(){
     writeOutSnapshot('snapshot.json');
 
 
-
-
+    console.log("- Getting current price");
+    await hertzFtmPairNode.JS.updatePriceInComparatorFromContract();
     console.log(`Current Price: ${hertzFtmPairNode.lastKnownPriceInComparator.toDecimal(8)} ${idToNode[hertzFtmPairNode.comparatorNodeId].symbol} ($${hertzFtmPairNode.lastKnownPriceInFiat.toDecimal(8)})`);
-    //console.log(`Current Price: ${hertzWethPairNode.lastKnownPriceInComparator.toDecimal(8)} ${idToNode[hertzWethPairNode.comparatorNodeId].symbol} ($${hertzWethPairNode.lastKnownPriceInFiat.toDecimal(8)})`);
     console.log("OK. Listening for trades...\n");
 
     hertzFtmPairNode.JS.startListening();
@@ -178,6 +177,7 @@ async function readInSnapshot(filename){
     for (let node of factories){
         node.JS = getJSComponent(node);
     }
+    
     const tokenIdsDone = [];
     while (tokens.length){
         for (let i = tokens.length - 1; i >= 0; i--) {
@@ -259,7 +259,7 @@ function getJSComponent(node){
             logHandler: async function(log){
                 const comparatorNode = idToNode[node.comparatorNodeId]
                         
-                const transaction = await endpointNode.JS.provider.getTransaction(log.transactionHash); //provider is bound to this
+                const transaction = await endpointNode.JS.provider.getTransaction(log.transactionHash);
                 const parsedLog = node.JS.pairContract.interface.parseLog(log);
             
                 let wasBuy;
