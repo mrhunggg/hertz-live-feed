@@ -1,0 +1,500 @@
+{
+ "idToNode": {
+  "0": {
+   "TYPE": "ENDPOINT",
+   "ID": "0",
+   "FACTORY_IDS": [
+    "1",
+    "2"
+   ],
+   "endpoint": "https://apis.ankr.com/e501c03064e7453f9e76b57bd80aa1cd/4b7b909b5596505a954a45acc3173c92/fantom/full/main"
+  },
+  "1": {
+   "TYPE": "FACTORY",
+   "ID": "1",
+   "ENDPOINT_ID": "0",
+   "TOKEN_IDS": [
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8"
+   ],
+   "address": "0x152eE697f2E276fA89E96742e9bB9aB1F2E61bE3"
+  },
+  "2": {
+   "TYPE": "FACTORY",
+   "ID": "2",
+   "ENDPOINT_ID": "0",
+   "TOKEN_IDS": [
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16"
+   ],
+   "address": "0xcb9ea67a5eb76d22688bf21d6689c435d4e25077"
+  },
+  "3": {
+   "TYPE": "TOKEN",
+   "ID": "3",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75",
+   "decimals": 6,
+   "symbol": "USDC",
+   "msAtLastPriceUpdate": 1631079360487,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "1",
+    "numerator": "1",
+    "denom": "1",
+    "denominator": "1"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "1",
+    "numerator": "1",
+    "denom": "1",
+    "denominator": "1"
+   },
+   "eventFilter": {
+    "address": [
+     null
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "4": {
+   "TYPE": "TOKEN",
+   "ID": "4",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+   "decimals": 18,
+   "symbol": "WFTM",
+   "comparatorNodeId": "3",
+   "pairAddress": "0x2b4C76d0dc16BE1C31D4C1DC53bF9B45987Fc75c",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079375057,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "5153781546910000000000000",
+    "numerator": "5153781546910000000000000",
+    "denom": "3374585084708276587263131",
+    "denominator": "3374585084708276587263131"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "5153781546910000000000000",
+    "numerator": "5153781546910000000000000",
+    "denom": "3374585084708276587263131",
+    "denominator": "3374585084708276587263131"
+   },
+   "eventFilter": {
+    "address": [
+     "0x2b4C76d0dc16BE1C31D4C1DC53bF9B45987Fc75c"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "5": {
+   "TYPE": "TOKEN",
+   "ID": "5",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0x74b23882a30290451A17c44f4F05243b6b58C76d",
+   "decimals": 18,
+   "symbol": "ETH",
+   "comparatorNodeId": "4",
+   "pairAddress": "0xf0702249F4D3A25cD3DED7859a165693685Ab577",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079337751,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "6358443269450482809229084",
+    "numerator": "6358443269450482809229084",
+    "denom": "2801166704454112004271",
+    "denominator": "2801166704454112004271"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "2587098431617101567804330480434073380000000000000",
+    "numerator": "2587098431617101567804330480434073380000000000000",
+    "denom": "746203213669574741196742865819480318514208293",
+    "denominator": "746203213669574741196742865819480318514208293"
+   },
+   "eventFilter": {
+    "address": [
+     "0xf0702249F4D3A25cD3DED7859a165693685Ab577"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "6": {
+   "TYPE": "TOKEN",
+   "ID": "6",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0xb3654dc3d10ea7645f8319668e8f54d2574fbdc8",
+   "decimals": 18,
+   "symbol": "LINK",
+   "comparatorNodeId": "4",
+   "pairAddress": "0x89d9bC2F2d091CfBFc31e333D6Dc555dDBc2fd29",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079348833,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "2575227959166827305750153",
+    "numerator": "2575227959166827305750153",
+    "denom": "139965884680795006064462",
+    "denominator": "139965884680795006064462"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "523899320312154925186509442761175667500000000000",
+    "numerator": "523899320312154925186509442761175667500000000000",
+    "denom": "18642766384956738710884492065188288360918016973",
+    "denominator": "18642766384956738710884492065188288360918016973"
+   },
+   "eventFilter": {
+    "address": [
+     "0x89d9bC2F2d091CfBFc31e333D6Dc555dDBc2fd29"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "7": {
+   "TYPE": "TOKEN",
+   "ID": "7",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0x1E4F97b9f9F913c46F1632781732927B9019C68b",
+   "decimals": 18,
+   "symbol": "CRV",
+   "comparatorNodeId": "4",
+   "pairAddress": "0xB471Ac6eF617e952b84C6a9fF5de65A9da96C93B",
+   "isToken0WithComparator": true,
+   "msAtLastPriceUpdate": 1631079360487,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "1520626179114959531584075",
+    "numerator": "1520626179114959531584075",
+    "denom": "1190525634631654905039287",
+    "denominator": "1190525634631654905039287"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "11755421773965113982515231752811585375000000000000",
+    "numerator": "11755421773965113982515231752811585375000000000000",
+    "denom": "6025741705770505477317419212512885527155876508999",
+    "denominator": "6025741705770505477317419212512885527155876508999"
+   },
+   "eventFilter": {
+    "address": [
+     "0xB471Ac6eF617e952b84C6a9fF5de65A9da96C93B"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "8": {
+   "TYPE": "TOKEN",
+   "ID": "8",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0x46E7628E8b4350b2716ab470eE0bA1fa9e76c6C5",
+   "decimals": 18,
+   "symbol": "BAND",
+   "comparatorNodeId": "4",
+   "pairAddress": "0x91b39D5584e2A7DC829f696235742cc293F2e8cf",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079375057,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "104717996744741428251385",
+    "numerator": "104717996744741428251385",
+    "denom": "19431144097448232371854",
+    "denominator": "19431144097448232371854"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "269846839626214911250692880824985175000000000000",
+    "numerator": "269846839626214911250692880824985175000000000000",
+    "denom": "32786024525033035926091607818380658407268157437",
+    "denominator": "32786024525033035926091607818380658407268157437"
+   },
+   "eventFilter": {
+    "address": [
+     "0x91b39D5584e2A7DC829f696235742cc293F2e8cf"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "9": {
+   "TYPE": "TOKEN",
+   "ID": "9",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x9fc071ce771c7b27b7d9a57c32c0a84c18200f8a",
+   "decimals": 18,
+   "symbol": "iFUSD",
+   "msAtLastPriceUpdate": 1631079383023,
+   "linkedToFiat": false,
+   "lastKnownPriceInComparator": {
+    "num": "1",
+    "numerator": "1",
+    "denom": "1",
+    "denominator": "1"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "1",
+    "numerator": "1",
+    "denom": "1",
+    "denominator": "1"
+   },
+   "eventFilter": {
+    "address": [
+     null
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "10": {
+   "TYPE": "TOKEN",
+   "ID": "10",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "4",
+   "pairAddress": "0x5551a831074685a0A1989E8faECdBC5D2a7ce7Af",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079315364,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "84597927673769805909465",
+    "numerator": "84597927673769805909465",
+    "denom": "445654011834920148506189",
+    "denominator": "445654011834920148506189"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "1308471803968704561476470441410076980000000000000",
+    "numerator": "1308471803968704561476470441410076980000000000000",
+    "denom": "4509623902174085593122613232841473894074383043019",
+    "denominator": "4509623902174085593122613232841473894074383043019"
+   },
+   "eventFilter": {
+    "address": [
+     "0x5551a831074685a0A1989E8faECdBC5D2a7ce7Af"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "11": {
+   "TYPE": "TOKEN",
+   "ID": "11",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "3",
+   "pairAddress": "0xe7D6971b2e041D736c7aDdcAf2B9d57D376bE5c7",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079324038,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "10447700155000000000000",
+    "numerator": "10447700155000000000000",
+    "denom": "35762053231439809528747",
+    "denominator": "35762053231439809528747"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "10447700155000000000000",
+    "numerator": "10447700155000000000000",
+    "denom": "35762053231439809528747",
+    "denominator": "35762053231439809528747"
+   },
+   "eventFilter": {
+    "address": [
+     "0xe7D6971b2e041D736c7aDdcAf2B9d57D376bE5c7"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "12": {
+   "TYPE": "TOKEN",
+   "ID": "12",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "5",
+   "pairAddress": "0xdD1C2969Bf45049700953F16f3bD930485Eda79C",
+   "isToken0WithComparator": true,
+   "msAtLastPriceUpdate": 1631079337755,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "6173807629774883773",
+    "numerator": "6173807629774883773",
+    "denom": "73119950916322056819997",
+    "denominator": "73119950916322056819997"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "15972248036096297059992078453525552393407473478453262740000000000000",
+    "numerator": "15972248036096297059992078453525552393407473478453262740000000000000",
+    "denom": "54562342357121085152965206610054712283886874729595960994705665635121",
+    "denominator": "54562342357121085152965206610054712283886874729595960994705665635121"
+   },
+   "eventFilter": {
+    "address": [
+     "0xdD1C2969Bf45049700953F16f3bD930485Eda79C"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "13": {
+   "TYPE": "TOKEN",
+   "ID": "13",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "6",
+   "pairAddress": "0x0710a6547A99e6688AEDFA798bCF030E44f306aC",
+   "isToken0WithComparator": true,
+   "msAtLastPriceUpdate": 1631079348834,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "59893115523983001573",
+    "numerator": "59893115523983001573",
+    "denom": "5768124648057730741199",
+    "denominator": "5768124648057730741199"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "31377962514392069211229511518903486453487725746981824977500000000000",
+    "numerator": "31377962514392069211229511518903486453487725746981824977500000000000",
+    "denom": "107533800293051081693351938851502126351340687721813592447924552370627",
+    "denominator": "107533800293051081693351938851502126351340687721813592447924552370627"
+   },
+   "eventFilter": {
+    "address": [
+     "0x0710a6547A99e6688AEDFA798bCF030E44f306aC"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "14": {
+   "TYPE": "TOKEN",
+   "ID": "14",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "7",
+   "pairAddress": "0xe33bC14c102AB296c40dc1E356732864FFc2cd3E",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079360488,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "5186924936573015886123",
+    "numerator": "5186924936573015886123",
+    "denom": "34946800482221635949209",
+    "denominator": "34946800482221635949209"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "60974490339313048734548751978457063342462448090316092251125000000000000",
+    "numerator": "60974490339313048734548751978457063342462448090316092251125000000000000",
+    "denom": "210580393148963723978746730577022348197777275947773481573692378595431791",
+    "denominator": "210580393148963723978746730577022348197777275947773481573692378595431791"
+   },
+   "eventFilter": {
+    "address": [
+     "0xe33bC14c102AB296c40dc1E356732864FFc2cd3E"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "15": {
+   "TYPE": "TOKEN",
+   "ID": "15",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "8",
+   "pairAddress": "0x5FEDe446FbDf49EeFA4D85458b7A57CE0C35b665",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631079375059,
+   "linkedToFiat": true,
+   "lastKnownPriceInComparator": {
+    "num": "1054129567863466699793",
+    "numerator": "1054129567863466699793",
+    "denom": "30044527311622509328135",
+    "denominator": "30044527311622509328135"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "56890706488900825261451008403965278638943805055080113755000000000000",
+    "numerator": "56890706488900825261451008403965278638943805055080113755000000000000",
+    "denom": "197008121856376091431599887254053884722162394757076340358777254717999",
+    "denominator": "197008121856376091431599887254053884722162394757076340358777254717999"
+   },
+   "eventFilter": {
+    "address": [
+     "0x5FEDe446FbDf49EeFA4D85458b7A57CE0C35b665"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "16": {
+   "TYPE": "TOKEN",
+   "ID": "16",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "9",
+   "pairAddress": "0xF0F5779701b16e289a37043Efd87cDb679bD7E6b",
+   "isToken0WithComparator": true,
+   "msAtLastPriceUpdate": 1631079383023,
+   "linkedToFiat": false,
+   "lastKnownPriceInComparator": {
+    "num": "4508420241858603812804",
+    "numerator": "4508420241858603812804",
+    "denom": "13075709808657544132087",
+    "denominator": "13075709808657544132087"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "4508420241858603812804",
+    "numerator": "4508420241858603812804",
+    "denom": "13075709808657544132087",
+    "denominator": "13075709808657544132087"
+   },
+   "eventFilter": {
+    "address": [
+     "0xF0F5779701b16e289a37043Efd87cDb679bD7E6b"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  }
+ },
+ "idTracker": 17
+}
