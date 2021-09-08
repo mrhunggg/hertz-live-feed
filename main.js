@@ -322,7 +322,7 @@ function getJSComponent(node){
                     tokenAmountRational,
                     comparatorAmountRational, 
                     fiatAmountRational,
-                    walletBalance,
+                    //walletBalance,
                     tokenPriceInComparator: lastKnownPriceInComparator,
                     tokenPriceInFiat: lastKnownPriceInFiat, 
                 });
