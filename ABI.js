@@ -21,7 +21,8 @@ function createTokenContract(provider, address){
     return new ethers.Contract(address, [
         'event Transfer(address indexed from, address indexed to, uint256 value)',
         'function decimals() external view returns (uint8)',
-        'function symbol() external view returns (string memory)'
+        'function symbol() external view returns (string memory)',
+        'function balanceOf(address account) external view returns (uint256)'
         
         ], provider
     );

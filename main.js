@@ -20,6 +20,17 @@ const endpointToNode = {};
 let idTracker = 0;
 
 
+/*
+    TODO
+    * add transaction time to the swap details
+    * handle rejected promises- just stop the error printing out
+    * 
+
+
+
+
+
+*/
 
 
 
@@ -59,7 +70,8 @@ async function init(){
     console.log('- Adding comparator chains');
     const usdcComparator = await getPairNode({
         endpoint, factoryAddress: spookyFactorAddress, 
-        tokenAddress: '0x04068DA6C83AFCFA0e13ba15A6696662335D5B75'
+        tokenAddress: '0x04068DA6C83AFCFA0e13ba15A6696662335D5B75',
+        isFiat: true
     });
     const ftmComparator = await getPairNode({
         endpoint, factoryAddress: spookyFactorAddress, 
@@ -84,7 +96,6 @@ async function init(){
     const iFusdComparator = await getPairNode({
         endpoint, factoryAddress: xdaoFactoryAddress, 
         tokenAddress: '0x9fc071ce771c7b27b7d9a57c32c0a84c18200f8a', //need to find ifusd to usdc link (not on xdao or spooky)
-        linkedToFiat: false
     });
 
 
@@ -140,13 +151,18 @@ async function init(){
         let outputString = `Transaction: https://ftmscan.com/tx/${swapInfo.transactionHash}\n${swapInfo.action}: `;
         outputString += `${swapInfo.tokenAmountRational.toDecimal(8)} ${pairNode.symbol} for `
         outputString +=  `${swapInfo.comparatorAmountRational.toDecimal(8)} ${comparatorNode.symbol} `;
-        if (comparatorNode.linkedToFiat){
+        if (pairNode.linkedToFiat){
             outputString += `($${swapInfo.fiatAmountRational.toDecimal(8)})\n`;
-            outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol} ($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
         } else {
-            outputString += `\nCurrent Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}\n`;
+            outputString += `\n`;
         }
-       
+        outputString += `Wallet balance: ${swapInfo.walletBalance.toDecimal(8)} ${pairNode.symbol}\n`;
+        outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}`
+        if (pairNode.linkedToFiat){
+            outputString += `($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
+        } else {
+            outputString += `\n`;
+        }
         console.log(outputString);
     });
 
@@ -258,9 +274,11 @@ function getJSComponent(node){
             },
             logHandler: async function(log){
                 const comparatorNode = idToNode[node.comparatorNodeId]
-                        
+
                 const transaction = await endpointNode.JS.provider.getTransaction(log.transactionHash);
                 const parsedLog = node.JS.pairContract.interface.parseLog(log);
+
+                let walletBalancePromise = endpointNode.JS.sendOne(contract, 'balanceOf', transaction.from);
             
                 let wasBuy;
                 let tokenAmount;
@@ -293,6 +311,8 @@ function getJSComponent(node){
                 node.lastKnownPriceInComparator = lastKnownPriceInComparator;
                 node.lastKnownPriceInFiat = lastKnownPriceInFiat;
                 node.msAtLastPriceUpdate = Date.now();
+
+                let walletBalance = bigRational((await walletBalancePromise).toString()).divide(bigRational('10').pow(node.decimals));
             
                 let action = wasBuy ? SWAP_TYPE.BUY : SWAP_TYPE.SELL ;
                 node.JS.swapHistory.push({
@@ -302,6 +322,7 @@ function getJSComponent(node){
                     tokenAmountRational,
                     comparatorAmountRational, 
                     fiatAmountRational,
+                    walletBalance,
                     tokenPriceInComparator: lastKnownPriceInComparator,
                     tokenPriceInFiat: lastKnownPriceInFiat, 
                 });
@@ -376,7 +397,7 @@ function getFactoryNode({endpoint, address}){
 //the factoryAddress should be the factory that holds the address-comparatorAddress pair
 //give no comparatorNodeId for fiat (ie the end of a comparator chain)
 //linkedToFiat is default true, unless the comparator node isn't linkedToFia
-async function getPairNode({endpoint, factoryAddress, tokenAddress, comparatorNodeId, linkedToFiat}){
+async function getPairNode({endpoint, factoryAddress, tokenAddress, comparatorNodeId, isFiat}){
     let endpointNode = getEndpointNode({endpoint});
     let factoryNode = getFactoryNode({endpoint, address: factoryAddress});
     for (const id of factoryNode.TOKEN_IDS){
@@ -386,9 +407,19 @@ async function getPairNode({endpoint, factoryAddress, tokenAddress, comparatorNo
     }
 
     const comparatorNode = idToNode[comparatorNodeId];
-    linkedToFiat = (linkedToFiat || linkedToFiat === undefined) && (!comparatorNode || comparatorNode.linkedToFiat);
-    const contract = ABI.createTokenContract(endpointNode.JS.provider, tokenAddress);
 
+    let linkedToFiat = isFiat;
+    if (comparatorNodeId){
+        let uplinkComparatorNode = comparatorNode;
+        while (uplinkComparatorNode.comparatorNodeId){
+            uplinkComparatorNode = idToNode[uplinkComparatorNode.comparatorNodeId];
+        }
+        if (uplinkComparatorNode.isFiat){
+            linkedToFiat = true;
+        }
+    }
+
+    const contract = ABI.createTokenContract(endpointNode.JS.provider, tokenAddress);
     const sendOne = endpointNode.JS.sendOne;
     
     const [decimals, symbol, pairAddress] = await Promise.all([
@@ -411,7 +442,8 @@ async function getPairNode({endpoint, factoryAddress, tokenAddress, comparatorNo
         pairAddress,
         isToken0WithComparator,
         msAtLastPriceUpdate: 0,
-        linkedToFiat,
+        linkedToFiat: !!linkedToFiat,//turn undefined into false
+        isFiat: !!isFiat,
         lastKnownPriceInComparator: bigRational(1),
         lastKnownPriceInFiat: bigRational(1),
         eventFilter: {
