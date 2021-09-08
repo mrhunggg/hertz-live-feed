@@ -23,8 +23,8 @@ let idTracker = 0;
 /*
     TODO
     * add transaction time to the swap details
-    * handle rejected promises- just stop the error printing out
-    * 
+    * handle rejected promises- just stop the errors printing out
+    * we can have wallet balance, but we need lp balances too or it's rather pointless
 
 
 
@@ -156,7 +156,7 @@ async function init(){
         } else {
             outputString += `\n`;
         }
-        outputString += `Wallet balance: ${swapInfo.walletBalance.toDecimal(8)} ${pairNode.symbol}\n`;
+        //outputString += `Wallet balance: ${swapInfo.walletBalance.toDecimal(8)} ${pairNode.symbol}\n`;
         outputString += `Current Price: ${swapInfo.tokenPriceInComparator.toDecimal(8)} ${comparatorNode.symbol}`
         if (pairNode.linkedToFiat){
             outputString += `($${swapInfo.tokenPriceInFiat.toDecimal(8)})\n`;
@@ -278,7 +278,7 @@ function getJSComponent(node){
                 const transaction = await endpointNode.JS.provider.getTransaction(log.transactionHash);
                 const parsedLog = node.JS.pairContract.interface.parseLog(log);
 
-                let walletBalancePromise = endpointNode.JS.sendOne(contract, 'balanceOf', transaction.from);
+                //let walletBalancePromise = endpointNode.JS.sendOne(contract, 'balanceOf', transaction.from);
             
                 let wasBuy;
                 let tokenAmount;
@@ -312,7 +312,7 @@ function getJSComponent(node){
                 node.lastKnownPriceInFiat = lastKnownPriceInFiat;
                 node.msAtLastPriceUpdate = Date.now();
 
-                let walletBalance = bigRational((await walletBalancePromise).toString()).divide(bigRational('10').pow(node.decimals));
+                //let walletBalance = bigRational((await walletBalancePromise).toString()).divide(bigRational('10').pow(node.decimals));
             
                 let action = wasBuy ? SWAP_TYPE.BUY : SWAP_TYPE.SELL ;
                 node.JS.swapHistory.push({
