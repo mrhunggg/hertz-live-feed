@@ -1,5 +1,5 @@
 {
- "displayArbitrages": true,
+ "displayArbitrages": false,
  "idToNode": {
   "0": {
    "TYPE": "ENDPOINT",
