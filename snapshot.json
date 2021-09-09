@@ -1,4 +1,5 @@
 {
+ "displayArbitrages": true,
  "idToNode": {
   "0": {
    "TYPE": "ENDPOINT",
@@ -19,7 +20,8 @@
     "5",
     "6",
     "7",
-    "8"
+    "8",
+    "17"
    ],
    "address": "0x152eE697f2E276fA89E96742e9bB9aB1F2E61bE3"
   },
@@ -35,7 +37,8 @@
     "13",
     "14",
     "15",
-    "16"
+    "16",
+    "18"
    ],
    "address": "0xcb9ea67a5eb76d22688bf21d6689c435d4e25077"
   },
@@ -46,7 +49,7 @@
    "tokenAddress": "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75",
    "decimals": 6,
    "symbol": "USDC",
-   "msAtLastPriceUpdate": 1631092338637,
+   "msAtLastPriceUpdate": 1631159759812,
    "linkedToFiat": true,
    "isFiat": true,
    "lastKnownPriceInComparator": {
@@ -80,20 +83,20 @@
    "comparatorNodeId": "3",
    "pairAddress": "0x2b4C76d0dc16BE1C31D4C1DC53bF9B45987Fc75c",
    "isToken0WithComparator": false,
-   "msAtLastPriceUpdate": 1631092318961,
+   "msAtLastPriceUpdate": 1631159759813,
    "linkedToFiat": true,
    "isFiat": false,
    "lastKnownPriceInComparator": {
-    "num": "15512413227825000000000000",
-    "numerator": "15512413227825000000000000",
-    "denom": "11162410053085498134454703",
-    "denominator": "11162410053085498134454703"
+    "num": "1790141200668000000000000",
+    "numerator": "1790141200668000000000000",
+    "denom": "1053896556903283194963103",
+    "denominator": "1053896556903283194963103"
    },
    "lastKnownPriceInFiat": {
-    "num": "15512413227825000000000000",
-    "numerator": "15512413227825000000000000",
-    "denom": "11162410053085498134454703",
-    "denominator": "11162410053085498134454703"
+    "num": "1790141200668000000000000",
+    "numerator": "1790141200668000000000000",
+    "denom": "1053896556903283194963103",
+    "denominator": "1053896556903283194963103"
    },
    "eventFilter": {
     "address": [
@@ -508,7 +511,75 @@
      "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
     ]
    }
+  },
+  "17": {
+   "TYPE": "TOKEN",
+   "ID": "17",
+   "FACTORY_ID": "1",
+   "tokenAddress": "0xf16e81dce15B08F326220742020379B855B87DF9",
+   "decimals": 18,
+   "symbol": "ICE",
+   "comparatorNodeId": "4",
+   "pairAddress": "0x623EE4a7F290d11C11315994dB70FB148b13021d",
+   "isToken0WithComparator": false,
+   "msAtLastPriceUpdate": 1631159759815,
+   "linkedToFiat": true,
+   "isFiat": false,
+   "lastKnownPriceInComparator": {
+    "num": "580419939325270015546748",
+    "numerator": "580419939325270015546748",
+    "denom": "341774380470365195627007",
+    "denominator": "341774380470365195627007"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "115448183008376286158239387911425296000000000000",
+    "numerator": "115448183008376286158239387911425296000000000000",
+    "denom": "40021649201718954897930618366048871847146146969",
+    "denominator": "40021649201718954897930618366048871847146146969"
+   },
+   "eventFilter": {
+    "address": [
+     "0x623EE4a7F290d11C11315994dB70FB148b13021d"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
+  },
+  "18": {
+   "TYPE": "TOKEN",
+   "ID": "18",
+   "FACTORY_ID": "2",
+   "tokenAddress": "0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD",
+   "decimals": 18,
+   "symbol": "HTZ",
+   "comparatorNodeId": "17",
+   "pairAddress": "0x122B29b8F34232646E5b0c88a52c66251683E08F",
+   "isToken0WithComparator": true,
+   "msAtLastPriceUpdate": 1631159768761,
+   "linkedToFiat": true,
+   "isFiat": false,
+   "lastKnownPriceInComparator": {
+    "num": "1938722560518381750829",
+    "numerator": "1938722560518381750829",
+    "denom": "20315754729247273874861",
+    "denominator": "20315754729247273874861"
+   },
+   "lastKnownPriceInFiat": {
+    "num": "223821996969194006181903338815624355159511702513319570384000000000000",
+    "numerator": "223821996969194006181903338815624355159511702513319570384000000000000",
+    "denom": "813070009042097241173008365783474220027481017467732208666590820446309",
+    "denominator": "813070009042097241173008365783474220027481017467732208666590820446309"
+   },
+   "eventFilter": {
+    "address": [
+     "0x122B29b8F34232646E5b0c88a52c66251683E08F"
+    ],
+    "topics": [
+     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822"
+    ]
+   }
   }
  },
- "idTracker": 17
+ "idTracker": 19
 }

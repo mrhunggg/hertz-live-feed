@@ -10,7 +10,7 @@ const prompt = (query) => new Promise((resolve) => rl.question(query, resolve));
 process.title = "Euler's Hertz Feed"
 
 const SWAP_TYPE = {BUY: "BUY", SELL: "SELL"};
-const SWAP_EVENT = "SWAP_EVENT";
+const EVENT = {SWAP: "SWAP", ARBITRAGE: "ARBITRAGE"};
 const globalEmitter = new EventEmitter();
 
 //database stuff
@@ -18,17 +18,18 @@ const NODE_TYPE = {ENDPOINT: "ENDPOINT", FACTORY: "FACTORY", TOKEN: "TOKEN"};
 let idToNode = {}
 const endpointToNode = {};
 let idTracker = 0;
+let displayArbitrages = false;
 
 
 /*
     TODO
     * handle rejected promises- just stop the errors printing out
+    * We should change lastKnownPriceInComparator and lastKnownPriceInFiat to functions and in those,
+        update from contract if haven't been updated in a while.
     * we can have wallet balance, but we need lp balances too or it's rather pointless
         and it's not just LPs, we have to track down the actual pool contract because people deposit their LPs in those...
 
-
-
-*/
+        */
 
 
 
@@ -91,6 +92,10 @@ async function init(){
         endpoint, factoryAddress: spookyFactorAddress, 
         tokenAddress: '0x46E7628E8b4350b2716ab470eE0bA1fa9e76c6C5', comparatorNodeId: ftmComparator.ID
     });
+    const iceComparator = await getPairNode({
+        endpoint, factoryAddress: spookyFactorAddress, 
+        tokenAddress: '0xf16e81dce15B08F326220742020379B855B87DF9', comparatorNodeId: ftmComparator.ID
+    });
     const iFusdComparator = await getPairNode({
         endpoint, factoryAddress: xdaoFactoryAddress, 
         tokenAddress: '0x9fc071ce771c7b27b7d9a57c32c0a84c18200f8a', //need to find ifusd to usdc link (not on xdao or spooky)
@@ -122,6 +127,10 @@ async function init(){
         endpoint, factoryAddress: xdaoFactoryAddress, 
         tokenAddress: '0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD', comparatorNodeId: bandComparator.ID
     });
+    const hertzIcePairNode = await getPairNode({
+        endpoint, factoryAddress: xdaoFactoryAddress, 
+        tokenAddress: '0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD', comparatorNodeId: iceComparator.ID
+    });
     const hertzIFusdPairNode = await getPairNode({
         endpoint, factoryAddress: xdaoFactoryAddress, 
         tokenAddress: '0x68F7880F7af43a81bEf25E2aE83802Eb6c2DdBFD', comparatorNodeId: iFusdComparator.ID
@@ -142,8 +151,9 @@ async function init(){
     hertzCurvePairNode.JS.startListening();
     hertzBandPairNode.JS.startListening();
     hertzIFusdPairNode.JS.startListening();
+    hertzIcePairNode.JS.startListening();
 
-    globalEmitter.on(SWAP_EVENT, async (pairNode, swapInfo) => {
+    globalEmitter.on(EVENT.SWAP, async (pairNode, swapInfo) => {
         const comparatorNode = idToNode[pairNode.comparatorNodeId];
         let outputString = `Transaction: https://ftmscan.com/tx/${swapInfo.transactionHash}\n${swapInfo.action}: `;
         outputString += `${swapInfo.tokenAmountRational.toDecimal(8)} ${pairNode.symbol} for `
@@ -163,6 +173,10 @@ async function init(){
         console.log(outputString);
     });
 
+    if (displayArbitrages){
+        globalEmitter.on(EVENT.ARBITRAGE, transactionHash => console.log(`Arbitrage: https://ftmscan.com/tx/${transactionHash}\n`));
+    }
+
 }
 (() => {init();})();
 
@@ -170,6 +184,7 @@ async function init(){
 async function readInSnapshot(filename){
     const json = JSON.parse(fs.readFileSync(filename).toString('utf-8'));
     idTracker = Number(json.idTracker);
+    displayArbitrages = json.displayArbitrages;
     idToNode = json.idToNode;
     let endpoints = [], factories = [], tokens = [];
    
@@ -206,7 +221,6 @@ async function readInSnapshot(filename){
                 tokenIdsDone.push(node.ID);
                 node.lastKnownPriceInComparator = bigRational(node.lastKnownPriceInComparator.num, node.lastKnownPriceInComparator.denom);
                 node.lastKnownPriceInFiat = bigRational(node.lastKnownPriceInFiat.num, node.lastKnownPriceInFiat.denom);
-                //await node.JS.updatePriceInComparatorFromContract();
             }
         }
     }
@@ -224,6 +238,21 @@ function getJSComponent(node){
                 const remainingRequests = await limiter.removeTokens(1);
                 return obj[functionName](...args);
             },
+            arbitrageCircularBuffer: (()=>{
+                const _bufferDictionary = {};
+                return {
+                    push: function(hash, bufferInfo){
+                        if (Object.keys(_bufferDictionary).length > 30){
+                            delete _bufferDictionary[Object.keys(_bufferDictionary)[0]];
+                        }
+                        _bufferDictionary[hash] = bufferInfo;
+                    },
+                    get: function(hash){
+                        return _bufferDictionary[hash];
+                    }
+                }
+            })(),
+                
         }
     } else if (node.TYPE === NODE_TYPE.FACTORY){
         const endpointNode = idToNode[node.ENDPOINT_ID];
@@ -269,15 +298,8 @@ function getJSComponent(node){
                 node.msAtLastPriceUpdate = Date.now();
                 return priceInComparator;
             },
-            logHandler: async function(log){
-                const comparatorNode = idToNode[node.comparatorNodeId]
-                
-                const [transaction, _] = await Promise.all([
-                    endpointNode.JS.provider.getTransaction(log.transactionHash),
-                    node.JS.updatePriceInComparatorFromContract()
-                ]);
-                const parsedLog = node.JS.pairContract.interface.parseLog(log);
-            
+            getTransactionLogDetails: function(transaction, parsedLog){
+                const comparatorNode = idToNode[node.comparatorNodeId];
                 let wasBuy;
                 let tokenAmount;
                 let comparatorAmount;
@@ -290,24 +312,114 @@ function getJSComponent(node){
                     tokenAmount = wasBuy ? parsedLog.args.amount1Out : parsedLog.args.amount1In;
                     comparatorAmount = wasBuy ? parsedLog.args.amount0In : parsedLog.args.amount0Out;
                 } 
-            
+
                 const tokenAmountRational = bigRational(tokenAmount.toString()).divide(bigRational('10').pow(node.decimals));
                 const comparatorAmountRational = bigRational(comparatorAmount.toString()).divide(bigRational('10').pow(comparatorNode.decimals));
                 //comparator's price would have been updated when we update this token's price above
                 let fiatAmountRational = comparatorAmountRational.multiply(comparatorNode.lastKnownPriceInFiat);
                 let action = wasBuy ? SWAP_TYPE.BUY : SWAP_TYPE.SELL ;
-                node.JS.swapHistory.push({
-                    transactionHash: log.transactionHash,
+                return {
+                    transactionHash: transaction.hash,
                     from: transaction.from,
                     action, 
                     tokenAmountRational,
                     comparatorAmountRational, 
                     fiatAmountRational, 
-                    timestamp: Date.now()
-                });
-            
-                node.JS.emitter.emit(SWAP_EVENT, node, node.JS.swapHistory[node.JS.swapHistory.length-1]);
-                globalEmitter.emit(SWAP_EVENT, node, node.JS.swapHistory[node.JS.swapHistory.length-1]);
+                    timestamp: transaction.timestamp
+                };
+            },
+            logHandler: async function(log){
+                const comparatorNode = idToNode[node.comparatorNodeId]
+                let transaction;
+                let transactionResponse;
+                if (endpointNode.JS.arbitrageCircularBuffer.get(log.transactionHash)){
+                    let arbitrageBuffer = endpointNode.JS.arbitrageCircularBuffer.get(log.transactionHash);
+                    transaction = arbitrageBuffer.transaction;
+                    transactionResponse = arbitrageBuffer.transactionResponse;
+                    if (arbitrageBuffer.arbitrageLogIndexes.includes(log.logIndex)){
+                        //no need to output- already outputted to console that this was an arbitration last time
+                        return;
+                    }
+                    //await node.JS.updatePriceInComparatorFromContract(); no need- would have happened last time
+                } else {
+                    [transaction, _] = await Promise.all([
+                        endpointNode.JS.provider.getTransaction(log.transactionHash),
+                        node.JS.updatePriceInComparatorFromContract()
+                    ]);
+                    transactionResponse = await transaction.wait();
+                }
+
+                const parsedLog = node.JS.pairContract.interface.parseLog(log);
+                const transactionLogDetails = node.JS.getTransactionLogDetails(transaction, parsedLog);
+                
+                //we wait until down here because there's no awaits from here on out
+                let arbitrageBuffer = endpointNode.JS.arbitrageCircularBuffer.get(log.transactionHash)
+                //we test arbitration by seeing if there's a log that mirrors this one
+                // since e.g. SELL: X HTZ for Y LINK is the same as BUY: Y LINK for X HTZ, we have to check comparators too
+                let otherLogIndexForArbitrage = undefined;
+                const logs = transactionResponse.logs;
+                for (let i = 0; i < logs.length; i++){
+                    if ((!arbitrageBuffer || !arbitrageBuffer.arbitrageLogIndexes.includes(logs[i].logIndex))
+                    && logs[i].logIndex != log.logIndex && logs[i].topics[0] === log.topics[0]){//topics[0] is essentially function id
+                        let otherPairNode;
+                        if (logs[i].address === log.address){
+                            otherPairNode = node;
+                        } else {
+                            const factoryNode = idToNode[node.FACTORY_ID];
+                            for (let tokenId of factoryNode.TOKEN_IDS){
+                                if (logs[i].address === idToNode[tokenId].pairAddress){
+                                    otherPairNode = idToNode[tokenId];
+                                    break;
+                                }
+                            }
+                            if (otherPairNode){
+                                const parsedOtherLog = otherPairNode.JS.pairContract.interface.parseLog(logs[i]);
+                                const transactionOtherLogDetails = otherPairNode.JS.getTransactionLogDetails(transaction, parsedOtherLog);
+                                if (otherPairNode.tokenAddress === node.tokenAddress
+                                && transactionOtherLogDetails.action != transactionLogDetails.action){
+                                    if (transactionOtherLogDetails.tokenAmountRational.equals(transactionLogDetails.tokenAmountRational)){
+                                        otherLogIndexForArbitrage = logs[i].logIndex;
+                                        break;
+                                    }
+                                    
+                                } else if (idToNode[otherPairNode.comparatorNodeId].tokenAddress === node.tokenAddress
+                                && transactionOtherLogDetails.action == transactionLogDetails.action){
+                                    if (transactionOtherLogDetails.comparatorAmountRational.equals(transactionLogDetails.tokenAmountRational)){
+                                        otherLogIndexForArbitrage = logs[i].logIndex;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //check again because we probably awaited and the other one could snuck in
+                if (arbitrageBuffer &&  arbitrageBuffer.arbitrageLogIndexes.includes(log.logIndex)){
+                    //no need to output- already outputted to console that this was an arbitration last time
+                    return;
+                }
+
+                if (otherLogIndexForArbitrage != undefined){
+                    if (arbitrageBuffer){
+                        arbitrageBuffer.arbitrageLogIndexes.push(log.logIndex);
+                        arbitrageBuffer.arbitrageLogIndexes.push(otherLogIndexForArbitrage);
+                        endpointNode.JS.arbitrageCircularBuffer.push(log.transactionHash, arbitrageBuffer);
+                    } else {
+                        arbitrageBuffer = {
+                            transaction,
+                            transactionResponse,
+                            arbitrageLogIndexes: [log.logIndex, otherLogIndexForArbitrage]
+                        }
+                        endpointNode.JS.arbitrageCircularBuffer.push(log.transactionHash, arbitrageBuffer);
+                    }
+                    node.JS.emitter.emit(EVENT.ARBITRAGE, log.transactionHash);
+                    globalEmitter.emit(EVENT.ARBITRAGE, log.transactionHash);
+                } else {
+                    node.JS.swapHistory.push(transactionLogDetails);
+                    node.JS.emitter.emit(EVENT.SWAP, node, node.JS.swapHistory[node.JS.swapHistory.length-1]);
+                    globalEmitter.emit(EVENT.SWAP, node, node.JS.swapHistory[node.JS.swapHistory.length-1]);
+                }
              }
         };
         js.startListening = function(){
@@ -329,7 +441,7 @@ function writeOutSnapshot(filename){
         delete node.JS;
         idToNodeCopy[id] = node;
     }
-    fs.writeFileSync(filename, JSON.stringify({idToNode: idToNodeCopy, idTracker}, null," "));
+    fs.writeFileSync(filename, JSON.stringify({displayArbitrages, idToNode: idToNodeCopy, idTracker}, null," "));
 }
 
 
